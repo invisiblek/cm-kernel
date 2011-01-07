@@ -378,7 +378,7 @@ static int lcm_write_tb(struct lcm_cmd cmd_table[], unsigned size)
 	for (i = 0; i < size; i++) {
 		lcm_write_cmd(cmd_table[i].reg, cmd_table[i].val);
 		if (cmd_table[i].delay)
-			hr_msleep(cmd_table[i].delay);
+			msleep(cmd_table[i].delay);
 	}
 	return 0;
 }

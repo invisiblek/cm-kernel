@@ -294,7 +294,7 @@ static int lcm_write_tb(struct lcm_cmd cmd_table[], unsigned size)
 	for (i = 0; i < size; i++) {
 		qspi_send_9bit(cmd_table[i].reg, cmd_table[i].val);
 		if (cmd_table[i].delay)
-			hr_msleep(cmd_table[i].delay);
+			msleep(cmd_table[i].delay);
 	}
 	return 0;
 }
@@ -340,9 +340,9 @@ static int sonywvga_panel_unblank(struct msm_lcdc_panel_ops *panel_data)
         wake_lock(&panel_idle_lock);
         mutex_lock(&panel_lock);
 
-	hr_msleep(100);
+	msleep(100);
         qspi_send_9bit(0x0, 0x29);
-	hr_msleep(20);
+	msleep(20);
 
 	//init gamma setting
 	if(!is_sony_with_gamma())
@@ -368,7 +368,7 @@ static int sonywvga_panel_blank(struct msm_lcdc_panel_ops *panel_data)
 
 	qspi_send_9bit(0x0, 0x28);
 	qspi_send_9bit(0x0, 0x10);
-	hr_msleep(40);
+	msleep(40);
 	g_unblank_stage = 0;
 	mutex_unlock(&panel_lock);
 	sonywvga_panel_power(0);
@@ -390,9 +390,9 @@ static int sonywvga_panel_init(struct msm_lcdc_panel_ops *ops)
 	wake_lock(&panel_idle_lock);
 	mutex_lock(&panel_lock);
 	sonywvga_panel_power(1);
-	hr_msleep(45);
+	msleep(45);
 	qspi_send_9bit(0x0, 0x11);
-	hr_msleep(5);
+	msleep(5);
 	qspi_send_9bit(0x0, 0x3a);
 	if (is_sony_RGB666())
 		qspi_send_9bit(0x1, 0x06);
