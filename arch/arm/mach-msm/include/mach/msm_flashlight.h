@@ -49,7 +49,7 @@ struct flashlight_platform_data {
 	uint8_t led_count; /* 0: 1 LED, 1: 2 LED */
 };
 
-int flashlight_control(int mode);
+//int flashlight_control(int mode);
 int aat1271_flashlight_control(int mode);
 int adp1650_flashlight_control(int mode);
 
