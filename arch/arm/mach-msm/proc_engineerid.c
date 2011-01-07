@@ -21,7 +21,7 @@
 
 static int c_show(struct seq_file *m, void *v)
 {
-	seq_printf(m, "%d\n", engineer_id);
+	seq_printf(m, "%d\n");
 
 	return 0;
 }
