@@ -192,16 +192,16 @@ static void incrediblec_config_bt_init(void)
 	mdelay(5);
 
 	/* BT_RESET_N */
-	gpio_configure(INCREDIBLEC_GPIO_BT_RESET_N,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_RESET_N,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 	mdelay(2);
 	/* BT_SHUTDOWN_N */
-	gpio_configure(INCREDIBLEC_GPIO_BT_SHUTDOWN_N,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_SHUTDOWN_N,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 	mdelay(2);
 
 	/* BT_CHIP_WAKE */
-	gpio_configure(INCREDIBLEC_GPIO_BT_CHIP_WAKE,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_CHIP_WAKE,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_HIGH);
 
 }
@@ -219,11 +219,11 @@ static void incrediblec_config_bt_on(void)
 	mdelay(5);
 
 	/* BT_RESET_N */
-	gpio_configure(INCREDIBLEC_GPIO_BT_RESET_N,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_RESET_N,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_HIGH);
 	mdelay(2);
 	/* BT_SHUTDOWN_N */
-	gpio_configure(INCREDIBLEC_GPIO_BT_SHUTDOWN_N,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_SHUTDOWN_N,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_HIGH);
 	mdelay(2);
 }
@@ -235,11 +235,11 @@ static void incrediblec_config_bt_off(void)
 	#endif
 
 	/* BT_SHUTDOWN_N */
-	gpio_configure(INCREDIBLEC_GPIO_BT_SHUTDOWN_N,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_SHUTDOWN_N,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 	mdelay(2);
 	/* BT_RESET_N */
-	gpio_configure(INCREDIBLEC_GPIO_BT_RESET_N,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_RESET_N,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 	mdelay(2);
 
@@ -249,13 +249,13 @@ static void incrediblec_config_bt_off(void)
 	mdelay(5);
 
 	/* BT_RTS */
-	gpio_configure(INCREDIBLEC_GPIO_BT_UART1_RTS,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_UART1_RTS,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 	/* BT_TX */
-	gpio_configure(INCREDIBLEC_GPIO_BT_UART1_TX,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_UART1_TX,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 	/* BT_CHIP_WAKE */
-	gpio_configure(INCREDIBLEC_GPIO_BT_CHIP_WAKE,
+	gpio_direction_output(INCREDIBLEC_GPIO_BT_CHIP_WAKE,
 				GPIOF_DRIVE_OUTPUT | GPIOF_OUTPUT_LOW);
 }
 
