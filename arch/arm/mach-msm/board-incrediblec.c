@@ -27,7 +27,7 @@
 #include <linux/input.h>
 #include <linux/akm8973.h>
 #include <linux/bma150.h>
-#include <linux/capella_cm3602.h>
+#include <linux/capella_cm3602_htc.h>
 #include <linux/regulator/machine.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -356,7 +356,6 @@ static struct usb_mass_storage_platform_data mass_storage_pdata = {
 	.vendor		= "HTC",
 	.product	= "Android Phone",
 	.release	= 0x0100,
-	.cdrom_lun	= 4,
 };
 
 static struct platform_device usb_mass_storage_device = {
@@ -1715,7 +1714,7 @@ static void __init incrediblec_fixup(struct machine_desc *desc, struct tag *tags
 static void __init incrediblec_map_io(void)
 {
 	msm_map_common_io();
-	msm_clock_init();
+	msm_clock_init(msm_clocks_8x50, msm_num_clocks_8x50);
 }
 
 extern struct sys_timer msm_timer;
