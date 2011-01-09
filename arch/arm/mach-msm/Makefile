@@ -71,9 +71,10 @@ obj-$(CONFIG_ARCH_QSD8X50) += board-qsd8x50.o devices-qsd8x50.o
 obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec.o panel-samsungwvga-tl2796a.o panel-sonywvga-s6d16a0x21.o board-incrediblec-tv.o
 obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec-keypad.o board-incrediblec-mmc.o
 obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec-rfkill.o board-incrediblec-audio.o
-obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec-wifi.o htc_awb_cal.o
-obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec-microp.o
-obj-$(CONFIG_MACH_INCREDIBLEC) += proc_engineerid.o
+obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec-wifi.o
+obj-$(CONFIG_MACH_INCREDIBLEC) += board-incrediblec-microp.o htc_bluetooth.o
+obj-$(CONFIG_MACH_INCREDIBLEC) += msm_vibrator.o htc_wifi_nvs.o
+obj-$(CONFIG_MACH_INCREDIBLEC) += proc_engineerid.o  htc_awb_cal.o
 obj-$(CONFIG_MACH_SUPERSONIC) += board-supersonic.o board-supersonic-panel.o
 obj-$(CONFIG_MACH_SUPERSONIC) += board-supersonic-keypad.o board-supersonic-mmc.o
 obj-$(CONFIG_MACH_SUPERSONIC) += board-supersonic-rfkill.o board-supersonic-audio.o
@@ -119,4 +120,3 @@ obj-$(CONFIG_MACH_MAHIMAHI) += board-mahimahi-tpa2018d1.o
 obj-$(CONFIG_MACH_MAHIMAHI) += board-mahimahi-smb329.o
 
 obj-$(CONFIG_ARCH_MSM_FLASHLIGHT) += msm_flashlight.o
-
