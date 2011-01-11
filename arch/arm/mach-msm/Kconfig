@@ -273,7 +273,7 @@ config MACH_INCREDIBLE
 	  Select this to support the Incredible device
 
 config MACH_INCREDIBLEC
-	depends on ARCH_QSD8X50 && MSM_FLASHLIGHT
+	depends on ARCH_QSD8X50
 	default y
 	bool "IncredibleC"
 	help
