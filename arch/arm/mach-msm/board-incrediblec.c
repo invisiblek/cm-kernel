@@ -1048,7 +1048,7 @@ static struct msm_camera_device_platform_data msm_camera_device_data = {
 
 static int flashlight_control(int mode)
 {
-	return aat1271_flashlight_control(mode);
+//	return aat1271_flashlight_control(mode);
 }
 
 static struct camera_flash_cfg msm_camera_sensor_flash_cfg = {
@@ -1713,7 +1713,7 @@ static void __init incrediblec_fixup(struct machine_desc *desc, struct tag *tags
 
 static void __init incrediblec_map_io(void)
 {
-	msm_map_common_io();
+	msm_map_qsd8x50_io();
 	msm_clock_init(msm_clocks_8x50, msm_num_clocks_8x50);
 }
 
