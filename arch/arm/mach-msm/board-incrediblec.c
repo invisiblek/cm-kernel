@@ -1048,7 +1048,7 @@ static struct msm_camera_device_platform_data msm_camera_device_data = {
 
 static int flashlight_control(int mode)
 {
-//	return aat1271_flashlight_control(mode);
+	return aat1271_flashlight_control(mode);
 }
 
 static struct camera_flash_cfg msm_camera_sensor_flash_cfg = {
