@@ -39,6 +39,7 @@
 #define LCMDBG(fmt, arg...)	{}
 #endif
 
+static struct clk *spi_clk ;
 struct lcm_cmd {
 	int reg;
 	uint32_t val;
@@ -452,9 +453,11 @@ static int amoled_panel_unblank(struct msm_lcdc_panel_ops *panel_data)
 	table_sel_idx = 0;
 	gamma_table_bank_select();
 	amoled_set_gamma_val(last_val);
+	clk_enable(spi_clk);
 	qspi_send(0, 0xef);
 	qspi_send(1, 0xd0);
 	qspi_send(1, 0xe8);
+	clk_disable(spi_clk);
 	lcm_write_cmd(0x14, 0x03);
 	mutex_unlock(&panel_lock);
 	wake_unlock(&panel_idle_lock);

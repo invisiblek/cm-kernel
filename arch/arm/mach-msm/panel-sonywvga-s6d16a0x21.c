@@ -32,6 +32,7 @@
 #include <linux/spi/spi.h>
 #include <mach/atmega_microp.h>
 #include "devices.h"
+#include "board-incrediblec.h"
 
 //#define DEBUG_LCM
 #ifdef DEBUG_LCM

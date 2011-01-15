@@ -1644,8 +1644,8 @@ static void __init incrediblec_init(void)
 
 	config_gpio_table(camera_off_gpio_table,
 		ARRAY_SIZE(camera_off_gpio_table));
-	/*gpio_direction_output(INCREDIBLEC_GPIO_TP_LS_EN, 0);*/
 	gpio_direction_output(INCREDIBLEC_GPIO_TP_EN, 0);
+	gpio_request(INCREDIBLEC_GPIO_TP_EN, "tp_en");
 
 	incrediblec_audio_init();
 	msm_device_i2c_init();
