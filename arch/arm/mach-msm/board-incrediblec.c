@@ -15,7 +15,6 @@
  *
  */
 
-#include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>
 #include <linux/i2c-msm.h>
@@ -27,7 +26,7 @@
 #include <linux/input.h>
 #include <linux/akm8973.h>
 #include <linux/bma150.h>
-#include <linux/capella_cm3602_htc.h>
+#include <linux/capella_cm3602.h>
 #include <linux/regulator/machine.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -78,15 +77,6 @@ extern void __init incrediblec_audio_init(void);
 #ifdef CONFIG_MICROP_COMMON
 void __init incrediblec_microp_init(void);
 #endif
-
-#define SAMSUNG_PANEL		0
-/*Bitwise mask for SONY PANEL ONLY*/
-#define SONY_PANEL		0x1		/*Set bit 0 as 1 when it is SONY PANEL*/
-#define SONY_PWM_SPI		0x2		/*Set bit 1 as 1 as PWM_SPI mode, otherwise it is PWM_MICROP mode*/
-#define SONY_GAMMA		0x4		/*Set bit 2 as 1 when panel contains GAMMA table in its NVM*/
-#define SONY_RGB666		0x8		/*Set bit 3 as 1 when panel is 18 bit, otherwise it is 16 bit*/
-
-extern int panel_type;
 
 unsigned int engineerid;
 
@@ -356,6 +346,7 @@ static struct usb_mass_storage_platform_data mass_storage_pdata = {
 	.vendor		= "HTC",
 	.product	= "Android Phone",
 	.release	= 0x0100,
+/*	.cdrom_lun	= 4,*/
 };
 
 static struct platform_device usb_mass_storage_device = {
@@ -365,6 +356,22 @@ static struct platform_device usb_mass_storage_device = {
 		.platform_data = &mass_storage_pdata,
 	},
 };
+
+#ifdef CONFIG_USB_ANDROID_RNDIS
+static struct usb_ether_platform_data rndis_pdata = {
+  /* ethaddr is filled by board_serialno_setup */
+  .vendorID  = 0x18d1,
+  .vendorDescr  = "Google, Inc.",
+};
+
+static struct platform_device rndis_device = {
+  .name  = "rndis",
+  .id  = -1,
+  .dev  = {
+    .platform_data = &rndis_pdata,
+  },
+};
+#endif
 
 static struct android_usb_platform_data android_usb_pdata = {
 	.vendor_id	= 0x0bb4,
@@ -396,6 +403,9 @@ static void inc_add_usb_devices(void)
 	gpio_set_value(INCREDIBLEC_USB_PHY_3V3_ENABLE, 1);
 	config_gpio_table(usb_ID_PIN_table, ARRAY_SIZE(usb_ID_PIN_table));
 	platform_device_register(&msm_device_hsusb);
+#ifdef CONFIG_USB_ANDROID_RNDIS	
+	platform_device_register(&rndis_device);
+#endif
 	platform_device_register(&usb_mass_storage_device);
 	platform_device_register(&android_usb_device);
 }
@@ -718,8 +728,8 @@ static struct regulator_init_data tps65023_data[5] = {
 	{
 		.constraints = {
 			.name = "dcdc1", /* VREG_MSMC2_1V29 */
-			.min_uV = 950000,
-			.max_uV = 1300000,
+			.min_uV = 925000,
+			.max_uV = 1350000,
 			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 		},
 		.consumer_supplies = tps65023_dcdc1_supplies,
@@ -1192,208 +1202,11 @@ static struct platform_device incrediblec_oj = {
 	}
 };
 
-static int amoled_power(int on)
-{
-	static struct vreg *vreg_lcm_2v6;
-	if (!vreg_lcm_2v6) {
-		vreg_lcm_2v6 = vreg_get(0, "gp1");
-		if (IS_ERR(vreg_lcm_2v6))
-			return -EINVAL;
-	}
-
-	if (on) {
-		unsigned id, on = 1;
-
-		id = PM_VREG_PDOWN_CAM_ID;
-		msm_proc_comm(PCOM_VREG_PULLDOWN, &on, &id);
-		vreg_enable(vreg_lcm_2v6);
-
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 1);
-		mdelay(25);
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 0);
-		mdelay(10);
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 1);
-		mdelay(20);
-	} else {
-		unsigned id, on = 0;
-
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 0);
-
-		id = PM_VREG_PDOWN_CAM_ID;
-		msm_proc_comm(PCOM_VREG_PULLDOWN, &on, &id);
-		vreg_disable(vreg_lcm_2v6);
-	}
-	return 0;
-}
-
-static int sonywvga_power(int on)
-{
-	unsigned id, on_off;
-	static struct vreg *vreg_lcm_2v6;
-	if (!vreg_lcm_2v6) {
-		vreg_lcm_2v6 = vreg_get(0, "gp1");
-		if (IS_ERR(vreg_lcm_2v6))
-			return -EINVAL;
-	}
-
-	if (on) {
-		on_off = 0;
-
-		id = PM_VREG_PDOWN_CAM_ID;
-		msm_proc_comm(PCOM_VREG_PULLDOWN, &on, &id);
-		vreg_enable(vreg_lcm_2v6);
-
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 1);
-		mdelay(10);
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 0);
-		udelay(500);
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 1);
-		mdelay(10);
-	} else {
-		on_off = 1;
-
-		gpio_set_value(INCREDIBLEC_LCD_RST_ID1, 0);
-
-		mdelay(120);
-
-		id = PM_VREG_PDOWN_CAM_ID;
-		msm_proc_comm(PCOM_VREG_PULLDOWN, &on, &id);
-		vreg_disable(vreg_lcm_2v6);
-	}
-	return 0;
-}
-
-#define LCM_GPIO_CFG(gpio, func) \
-PCOM_GPIO_CFG(gpio, func, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_4MA)
-static uint32_t display_on_gpio_table[] = {
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R0, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R1, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R2, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R3, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R4, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R5, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G0, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G1, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G2, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G3, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G4, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G5, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B0, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B1, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B2, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B3, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B4, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B5, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_PCLK, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_VSYNC, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_HSYNC, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_DE, 1),
-};
-
-static uint32_t display_off_gpio_table[] = {
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R0, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R1, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R2, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R3, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R4, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_R5, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G0, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G1, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G2, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G3, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G4, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_G5, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B0, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B1, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B2, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B3, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B4, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_B5, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_PCLK, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_VSYNC, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_HSYNC, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_DE, 0),
-};
-
-static uint32_t sony_display_on_gpio_table[] = {
-	LCM_GPIO_CFG(INCREDIBLEC_SPI_CLK, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_SPI_CS, 1),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_ID0, 1),
-        LCM_GPIO_CFG(INCREDIBLEC_SPI_DO, 1),
-};
-
-static uint32_t sony_display_off_gpio_table[] = {
-	LCM_GPIO_CFG(INCREDIBLEC_SPI_CLK, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_SPI_CS, 0),
-	LCM_GPIO_CFG(INCREDIBLEC_LCD_ID0, 0),
-        LCM_GPIO_CFG(INCREDIBLEC_SPI_DO, 0),
-};
-
-static int panel_gpio_switch(int on)
-{
-	if (on) {
-		config_gpio_table(display_on_gpio_table,
-			ARRAY_SIZE(display_on_gpio_table));
-
-		if(panel_type != SAMSUNG_PANEL) {
-			config_gpio_table(sony_display_on_gpio_table,
-					ARRAY_SIZE(sony_display_on_gpio_table));
-		}
-	}
-	else {
-		int i;
-
-		config_gpio_table(display_off_gpio_table,
-			ARRAY_SIZE(display_off_gpio_table));
-
-		for (i = INCREDIBLEC_LCD_R0; i <= INCREDIBLEC_LCD_R5; i++)
-			gpio_set_value(i, 0);
-		for (i = INCREDIBLEC_LCD_G0; i <= INCREDIBLEC_LCD_G5; i++)
-			gpio_set_value(i, 0);
-		for (i = INCREDIBLEC_LCD_B0; i <= INCREDIBLEC_LCD_DE; i++)
-			gpio_set_value(i, 0);
-
-		if(panel_type != SAMSUNG_PANEL) {
-			config_gpio_table(sony_display_off_gpio_table,
-					ARRAY_SIZE(sony_display_off_gpio_table));
-		}
-	}
-	return 0;
-}
-
 static struct resource resources_msm_fb[] = {
 	{
 		.start = MSM_FB_BASE,
 		.end = MSM_FB_BASE + MSM_FB_SIZE - 1,
 		.flags = IORESOURCE_MEM,
-	},
-};
-
-static struct panel_platform_data amoled_data = {
-	.fb_res = &resources_msm_fb[0],
-	.power = amoled_power,
-	.gpio_switch = panel_gpio_switch,
-};
-
-static struct platform_device amoled_panel = {
-	.name = "panel-tl2796a",
-	.id = -1,
-	.dev = {
-		.platform_data = &amoled_data
-	},
-};
-
-static struct panel_platform_data sonywvga_data = {
-	.fb_res = &resources_msm_fb[0],
-	.power = sonywvga_power,
-	.gpio_switch = panel_gpio_switch,
-};
-
-static struct platform_device sonywvga_panel = {
-	.name = "panel-sonywvga-s6d16a0x21",
-	.id = -1,
-	.dev = {
-		.platform_data = &sonywvga_data,
 	},
 };
 
@@ -1583,18 +1396,6 @@ static void incrediblec_reset(void)
        gpio_set_value(INCREDIBLEC_GPIO_PS_HOLD, 0);
 }
 
-static int incrediblec_init_panel(void)
-{
-	int ret = 0;
-
-	if (panel_type != SAMSUNG_PANEL)
-		ret = platform_device_register(&sonywvga_panel);
-	else
-		ret = platform_device_register(&amoled_panel);
-
-	return ret;
-}
-
 static void __init incrediblec_init(void)
 {
 	int ret;
@@ -1644,8 +1445,8 @@ static void __init incrediblec_init(void)
 
 	config_gpio_table(camera_off_gpio_table,
 		ARRAY_SIZE(camera_off_gpio_table));
+	/*gpio_direction_output(INCREDIBLEC_GPIO_TP_LS_EN, 0);*/
 	gpio_direction_output(INCREDIBLEC_GPIO_TP_EN, 0);
-	gpio_request(INCREDIBLEC_GPIO_TP_EN, "tp_en");
 
 	incrediblec_audio_init();
 	msm_device_i2c_init();
@@ -1663,7 +1464,7 @@ static void __init incrediblec_init(void)
 	}
 
 	platform_add_devices(devices, ARRAY_SIZE(devices));
-	incrediblec_init_panel();
+
 	if (system_rev > 2) {
 		incrediblec_atmel_ts_data[0].config_T9[7] = 33;
 		incrediblec_atmel_ts_data[0].object_crc[0] = 0x2E;

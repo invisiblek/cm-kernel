@@ -64,7 +64,7 @@ static int capella_cm3602_enable(struct capella_cm3602_data *data)
 	if (data->enabled) {
 		D("%s: already enabled\n", __func__);
 	} else {
-		data->pdata->power(1);
+		data->pdata->power(PS_PWR_ON, 1);
 		data->enabled = 1;
 		capella_cm3602_report(data);
 	}
@@ -75,7 +75,7 @@ static int capella_cm3602_disable(struct capella_cm3602_data *data)
 {
 	D("%s\n", __func__);
 	if (data->enabled) {
-		data->pdata->power(0);
+		data->pdata->power(PS_PWR_ON, 0);
 		data->enabled = 0;
 	} else {
 		D("%s: already disabled\n", __func__);
