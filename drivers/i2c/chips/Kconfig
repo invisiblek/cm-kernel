@@ -13,4 +13,10 @@ config SENSORS_MT9T013
 	help
 	 MT9T013 Camera Driver implemented by HTC.
 
+config AMP_TPA6130A
+	tristate "TI TPA6130A Headset AMP Driver"
+	depends on I2C
+	help
+	 TI TPA6130A Headset AMP Driver implemented by HTC.
+
 endmenu
