@@ -409,6 +409,12 @@ config SENSORS_BMA150_SPI
 	help
 	  BMA150 G-sensor Driver implemented by HTC.
 
+config AMP_TPA2018D1
+	tristate "TI TPA2018D1 Speaker AMP Driver"
+	depends on I2C
+	help
+	 TI TPA2018D1 Speaker AMP Driver implemented by HTC.
+
 config APANIC
 	bool "Android kernel panic diagnostics driver"
 	default n
