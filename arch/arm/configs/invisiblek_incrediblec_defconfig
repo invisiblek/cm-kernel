@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.35.10
-# Sun Jan 16 20:34:38 2011
+# Wed Jan 19 21:49:33 2011
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -958,6 +958,7 @@ CONFIG_VP_A1026=y
 CONFIG_UID_STAT=y
 # CONFIG_WL127X_RFKILL is not set
 CONFIG_SENSORS_BMA150_SPI=y
+CONFIG_AMP_TPA2018D1=y
 # CONFIG_APANIC is not set
 # CONFIG_C2PORT is not set
 
@@ -1030,7 +1031,6 @@ CONFIG_WLAN=y
 CONFIG_BCM4329=m
 CONFIG_BCM4329_FW_PATH="/system/etc/firmware/fw_bcm4329.bin"
 CONFIG_BCM4329_NVRAM_PATH="/proc/calibration"
-# CONFIG_BCM4329_ENABLE_CSCAN is not set
 # CONFIG_HOSTAP is not set
 # CONFIG_TIWLAN1251 is not set
 
