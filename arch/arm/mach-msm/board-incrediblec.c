@@ -22,6 +22,7 @@
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
+#include <linux/usb/android_composite.h>
 #include <linux/android_pmem.h>
 #include <linux/input.h>
 #include <linux/akm8973.h>
@@ -43,7 +44,7 @@
 #include <mach/camera.h>
 #include <mach/msm_iomap.h>
 #include <mach/htc_battery.h>
-#include <mach/htc_usb.h>
+// #include <mach/htc_usb.h>
 #include <mach/perflock.h>
 #include <mach/msm_serial_debugger.h>
 #include <mach/system.h>
@@ -71,6 +72,9 @@
 #ifdef CONFIG_ARCH_QSD8X50
 extern unsigned char *get_bt_bd_ram(void);
 #endif
+
+static uint opt_usb_h2w_sw;
+module_param_named(usb_h2w_sw, opt_usb_h2w_sw, uint, 0);
 
 void msm_init_pmic_vibrator(void);
 extern void __init incrediblec_audio_init(void);
@@ -325,28 +329,92 @@ static struct platform_device incrediblec_leds = {
 	},
 };
 
-static uint32_t usb_phy_3v3_table[] = {
-	PCOM_GPIO_CFG(INCREDIBLEC_USB_PHY_3V3_ENABLE, 0, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_4MA)
-};
-
-static uint32_t usb_ID_PIN_table[] = {
-	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_USB_ID_PIN, 0, GPIO_INPUT, GPIO_NO_PULL, GPIO_4MA),
-};
-
 static int incrediblec_phy_init_seq[] = { 0x1D, 0x0D, 0x1D, 0x10, -1 };
-#ifdef CONFIG_USB_ANDROID
+
+extern void msm_hsusb_8x50_phy_reset(void);
+
 static struct msm_hsusb_platform_data msm_hsusb_pdata = {
-	.phy_init_seq		= incrediblec_phy_init_seq,
-	.phy_reset		= msm_hsusb_8x50_phy_reset,
-	.usb_id_pin_gpio =  INCREDIBLEC_GPIO_USB_ID_PIN,
+	.phy_init_seq = incrediblec_phy_init_seq,
+	.phy_reset = msm_hsusb_8x50_phy_reset,
+	.usb_id_pin_gpio =	INCREDIBLEC_GPIO_USB_ID_PIN,
+	.accessory_detect = 1, /* detect by ID pin gpio */
+};
+
+static char *usb_functions_ums[] = {
+	"usb_mass_storage",
+};
+
+static char *usb_functions_ums_adb[] = {
+	"usb_mass_storage",
+	"adb",
+};
+
+static char *usb_functions_rndis[] = {
+	"rndis",
+};
+
+static char *usb_functions_rndis_adb[] = {
+	"rndis",
+	"adb",
+};
+
+#ifdef CONFIG_USB_ANDROID_DIAG
+static char *usb_functions_adb_diag[] = {
+	"usb_mass_storage",
+	"adb",
+	"diag",
+};
+#endif
+
+static char *usb_functions_all[] = {
+#ifdef CONFIG_USB_ANDROID_RNDIS
+	"rndis",
+#endif
+	"usb_mass_storage",
+	"adb",
+#ifdef CONFIG_USB_ANDROID_ACM
+	"acm",
+#endif
+#ifdef CONFIG_USB_ANDROID_DIAG
+	"diag",
+#endif
+};
+
+static struct android_usb_product usb_products[] = {
+	{
+		.product_id	= 0x0ff9,
+		.num_functions	= ARRAY_SIZE(usb_functions_ums),
+		.functions	= usb_functions_ums,
+	},
+	{
+		.product_id	= 0x0c8d,
+		.num_functions	= ARRAY_SIZE(usb_functions_ums_adb),
+		.functions	= usb_functions_ums_adb,
+	},
+	{
+		.product_id	= 0x0c03,
+		.num_functions	= ARRAY_SIZE(usb_functions_rndis),
+		.functions	= usb_functions_rndis,
+	},
+	{
+		.product_id	= 0x0c04,
+		.num_functions	= ARRAY_SIZE(usb_functions_rndis_adb),
+		.functions	= usb_functions_rndis_adb,
+	},
+#ifdef CONFIG_USB_ANDROID_DIAG
+	{
+		.product_id	= 0x0c07,
+		.num_functions	= ARRAY_SIZE(usb_functions_adb_diag),
+		.functions	= usb_functions_adb_diag,
+	},
+#endif
 };
 
 static struct usb_mass_storage_platform_data mass_storage_pdata = {
-	.nluns		= 3,
+	.nluns		= 1,
 	.vendor		= "HTC",
-	.product	= "Android Phone",
+	.product	= "Incredible",
 	.release	= 0x0100,
-/*	.cdrom_lun	= 4,*/
 };
 
 static struct platform_device usb_mass_storage_device = {
@@ -359,17 +427,17 @@ static struct platform_device usb_mass_storage_device = {
 
 #ifdef CONFIG_USB_ANDROID_RNDIS
 static struct usb_ether_platform_data rndis_pdata = {
-  /* ethaddr is filled by board_serialno_setup */
-  .vendorID  = 0x18d1,
-  .vendorDescr  = "Google, Inc.",
+	/* ethaddr is filled by board_serialno_setup */
+	.vendorID	= 0x18d1,
+	.vendorDescr	= "Google, Inc.",
 };
 
 static struct platform_device rndis_device = {
-  .name  = "rndis",
-  .id  = -1,
-  .dev  = {
-    .platform_data = &rndis_pdata,
-  },
+	.name	= "rndis",
+	.id	= -1,
+	.dev	= {
+		.platform_data = &rndis_pdata,
+	},
 };
 #endif
 
@@ -386,30 +454,13 @@ static struct android_usb_platform_data android_usb_pdata = {
 };
 
 static struct platform_device android_usb_device = {
-	.name	= "android_usb",
-	.id		= -1,
-	.dev		= {
+	.name = "android_usb",
+	.id   = -1,
+	.dev	= {
 		.platform_data = &android_usb_pdata,
 	},
 };
-static void inc_add_usb_devices(void)
-{
-	android_usb_pdata.products[0].product_id =
-		android_usb_pdata.product_id;
-	android_usb_pdata.serial_number = board_serialno();
-	msm_hsusb_pdata.serial_number = board_serialno();
-	msm_device_hsusb.dev.platform_data = &msm_hsusb_pdata;
-	config_gpio_table(usb_phy_3v3_table, ARRAY_SIZE(usb_phy_3v3_table));
-	gpio_set_value(INCREDIBLEC_USB_PHY_3V3_ENABLE, 1);
-	config_gpio_table(usb_ID_PIN_table, ARRAY_SIZE(usb_ID_PIN_table));
-	platform_device_register(&msm_device_hsusb);
-#ifdef CONFIG_USB_ANDROID_RNDIS	
-	platform_device_register(&rndis_device);
-#endif
-	platform_device_register(&usb_mass_storage_device);
-	platform_device_register(&android_usb_device);
-}
-#endif
+
 
 static struct platform_device incrediblec_rfkill = {
 	.name = "incrediblec_rfkill",
@@ -1233,10 +1284,8 @@ struct platform_device bcm_bt_lpm_device = {
 
 static struct platform_device *devices[] __initdata = {
 	&msm_device_uart1,
-#ifdef CONFIG_SERIAL_MSM_HS
 	&bcm_bt_lpm_device,
 	&msm_device_uart_dm1,
-#endif
 	&htc_battery_pdev,
 	&htc_headset_mgr,
 	&htc_headset_gpio,
@@ -1244,8 +1293,12 @@ static struct platform_device *devices[] __initdata = {
 	&incrediblec_rfkill,
 	&msm_device_smd,
 	&msm_device_nand,
-	/*&msm_device_hsusb,*/
-	/*&usb_mass_storage_device,*/
+	&msm_device_hsusb,
+	&usb_mass_storage_device,
+#ifdef CONFIG_USB_ANDROID_RNDIS
+	&rndis_device,
+#endif
+	&android_usb_device,
 	&android_pmem_mdp_device,
 	&android_pmem_adsp_device,
 #ifdef CONFIG_720P_CAMERA
@@ -1263,6 +1316,14 @@ static struct platform_device *devices[] __initdata = {
 	&qsd_device_spi,
 #endif
 	&incrediblec_oj,
+};
+
+static uint32_t usb_phy_3v3_table[] = {
+	PCOM_GPIO_CFG(INCREDIBLEC_USB_PHY_3V3_ENABLE, 0, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_4MA)
+};
+
+static uint32_t usb_ID_PIN_table[] = {
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_USB_ID_PIN, 0, GPIO_INPUT, GPIO_NO_PULL, GPIO_4MA),
 };
 
 static uint32_t incrediblec_serial_debug_table[] = {
@@ -1442,7 +1503,7 @@ static void __init incrediblec_init(void)
 	#endif
 
 	incrediblec_config_uart_gpios();
-
+	config_gpio_table(usb_phy_3v3_table, ARRAY_SIZE(usb_phy_3v3_table));
 	config_gpio_table(camera_off_gpio_table,
 		ARRAY_SIZE(camera_off_gpio_table));
 	/*gpio_direction_output(INCREDIBLEC_GPIO_TP_LS_EN, 0);*/
@@ -1454,17 +1515,15 @@ static void __init incrediblec_init(void)
 	incrediblec_microp_init();
 #endif
 
-#ifdef CONFIG_USB_ANDROID
-	inc_add_usb_devices();
-#endif
-
 	if (system_rev >= 2) {
 		microp_data.num_functions   = ARRAY_SIZE(microp_functions_1);
 		microp_data.microp_function = microp_functions_1;
 	}
 
 	platform_add_devices(devices, ARRAY_SIZE(devices));
-
+	if (!opt_usb_h2w_sw) {
+		msm_device_hsusb.dev.platform_data = &msm_hsusb_pdata;
+	}	
 	if (system_rev > 2) {
 		incrediblec_atmel_ts_data[0].config_T9[7] = 33;
 		incrediblec_atmel_ts_data[0].object_crc[0] = 0x2E;
