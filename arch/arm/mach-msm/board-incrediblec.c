@@ -411,7 +411,7 @@ static struct android_usb_product usb_products[] = {
 };
 
 static struct usb_mass_storage_platform_data mass_storage_pdata = {
-	.nluns		= 1,
+	.nluns		= 3,
 	.vendor		= "HTC",
 	.product	= "Incredible",
 	.release	= 0x0100,
