@@ -73,11 +73,9 @@ void incrediblec_headset_enable(int en)
 		if(en) {
 			gpio_set_value(INCREDIBLEC_AUD_JACKHP_EN, 1);
 			mdelay(10);
-			if (system_rev == 0)
-				set_headset_amp(1);
+			set_headset_amp(1);
 		} else {
-			if (system_rev == 0)
-				set_headset_amp(0);
+			set_headset_amp(0);
 			gpio_set_value(INCREDIBLEC_AUD_JACKHP_EN, 0);
 		}
 	}
@@ -232,7 +230,7 @@ void incrediblec_analog_init(void)
 	pmic_set_speaker_delay(SPKR_DLY_100MS);
 
 	gpio_request(INCREDIBLEC_AUD_JACKHP_EN, "aud_jackhp_en");
-	gpio_direction_output(INCREDIBLEC_AUD_JACKHP_EN, 0);
+	gpio_direction_output(INCREDIBLEC_AUD_JACKHP_EN, 1);
 	gpio_set_value(INCREDIBLEC_AUD_JACKHP_EN, 0);
 
 	mutex_lock(&bt_sco_lock);
