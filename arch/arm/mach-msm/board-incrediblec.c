@@ -69,10 +69,6 @@
 #define SMEM_SPINLOCK_I2C      6
 #define INCREDIBLEC_MICROP_VER		0x04
 
-#ifdef CONFIG_ARCH_QSD8X50
-extern unsigned char *get_bt_bd_ram(void);
-#endif
-
 static uint opt_usb_h2w_sw;
 module_param_named(usb_h2w_sw, opt_usb_h2w_sw, uint, 0);
 
@@ -995,22 +991,6 @@ static struct i2c_board_info i2c_devices[] = {
 	},
 };
 
-#ifdef CONFIG_ARCH_QSD8X50
-static char bdaddress[20];
-
-static void bt_export_bd_address(void)
- {
-	unsigned char cTemp[6];
-
-	memcpy(cTemp, get_bt_bd_ram(), 6);
-	sprintf(bdaddress, "%02x:%02x:%02x:%02x:%02x:%02x", cTemp[0], cTemp[1], cTemp[2], cTemp[3], cTemp[4], cTemp[5]);
-	printk(KERN_INFO "YoYo--BD_ADDRESS=%s\n", bdaddress);
-}
-
-module_param_string(bdaddress, bdaddress, sizeof(bdaddress), S_IWUSR | S_IRUGO);
-MODULE_PARM_DESC(bdaddress, "BT MAC ADDRESS");
-#endif
-
 static uint32_t camera_off_gpio_table[] = {
 
 #if 0	/* CAMERA OFF*/
@@ -1318,6 +1298,26 @@ static struct platform_device *devices[] __initdata = {
 	&incrediblec_oj,
 };
 
+static uint32_t bt_gpio_table_rev_CX[] = {
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_UART1_RTS, 2, GPIO_OUTPUT,
+				  GPIO_PULL_UP, GPIO_8MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_UART1_CTS, 2, GPIO_INPUT,
+				  GPIO_PULL_UP, GPIO_8MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_UART1_RX, 2, GPIO_INPUT,
+				  GPIO_PULL_UP, GPIO_8MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_UART1_TX, 2, GPIO_OUTPUT,
+				  GPIO_PULL_UP, GPIO_8MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_RESET_N, 0, GPIO_OUTPUT,
+				  GPIO_PULL_DOWN, GPIO_4MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_SHUTDOWN_N, 0, GPIO_OUTPUT,
+				  GPIO_PULL_DOWN, GPIO_4MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_CHIP_WAKE, 0, GPIO_OUTPUT,
+				  GPIO_PULL_DOWN, GPIO_4MA),
+	PCOM_GPIO_CFG(INCREDIBLEC_GPIO_BT_HOST_WAKE, 0, GPIO_INPUT,
+				  GPIO_PULL_DOWN, GPIO_4MA),
+};
+
+
 static uint32_t usb_phy_3v3_table[] = {
 	PCOM_GPIO_CFG(INCREDIBLEC_USB_PHY_3V3_ENABLE, 0, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_4MA)
 };
@@ -1367,6 +1367,31 @@ static void __init msm_device_i2c_init(void)
 	msm_i2c_gpio_init();
 	msm_device_i2c.dev.platform_data = &msm_i2c_pdata;
 }
+
+
+#define ATAG_BDADDR 0x43294329 
+#define ATAG_BDADDR_SIZE 4
+#define BDADDR_STR_SIZE 18
+
+static char bdaddr[BDADDR_STR_SIZE];
+
+module_param_string(bdaddr, bdaddr, sizeof(bdaddr), 0400);
+MODULE_PARM_DESC(bdaddr, "bluetooth address");
+
+static int __init parse_tag_bdaddr(const struct tag *tag)
+{
+	unsigned char *b = (unsigned char *)&tag->u;
+	
+	if (tag->hdr.size != ATAG_BDADDR_SIZE)
+		return -EINVAL;
+	
+	snprintf(bdaddr, BDADDR_STR_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X",
+			 b[0], b[1], b[2], b[3], b[4], b[5]);
+	
+	return 0;
+}
+
+__tagtable(ATAG_BDADDR, parse_tag_bdaddr);
 
 static struct msm_acpu_clock_platform_data incrediblec_clock_data = {
 	.acpu_switch_time_us	= 20,
@@ -1489,9 +1514,10 @@ static void __init incrediblec_init(void)
 				&msm_device_uart1.dev, 1, INT_UART1_RX);
 #endif
 
-#ifdef CONFIG_ARCH_QSD8X50
-	bt_export_bd_address();
-#endif
+	bcm_bt_lpm_pdata.gpio_wake = INCREDIBLEC_GPIO_BT_CHIP_WAKE;
+	config_gpio_table(bt_gpio_table_rev_CX, ARRAY_SIZE(bt_gpio_table_rev_CX));
+	
+	
 	/* set the gpu power rail to manual mode so clk en/dis will not
 	 * turn off gpu power, and hang it on resume */
 	incrediblec_kgsl_power_rail_mode(0);
