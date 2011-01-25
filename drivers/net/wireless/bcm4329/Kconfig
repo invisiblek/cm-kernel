@@ -27,10 +27,8 @@ config BCM4329_NVRAM_PATH
 	  Path to the calibration file.
 
 config BCM4329_ENABLE_CSCAN
-        depends on BCM4329
-        bool "Enable CSCAN"
-        default n
-        ---help---
-          Enable the use of CSCAN methods.
-        
-
+	depends on BCM4329
+	bool "Enable CSCAN"
+	default n
+	---help---
+	  Enable the use of CSCAN methods.
