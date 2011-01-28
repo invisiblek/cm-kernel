@@ -62,7 +62,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>
-#include <linux/slab.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 

@@ -537,7 +537,6 @@ static int set_config(struct usb_composite_dev *cdev,
 			     |  (ep->bEndpointAddress & 0x0f);
 			set_bit(addr, f->endpoints);
 		}
-
 		result = f->set_alt(f, tmp, 0);
 		if (result < 0) {
 			DBG(cdev, "interface %d (%s/%p) alt 0 --> %d\n",

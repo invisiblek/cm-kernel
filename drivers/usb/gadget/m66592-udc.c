@@ -25,7 +25,6 @@
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
-#include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>

@@ -309,14 +309,12 @@
 
 static const char fsg_string_interface[] = "Mass Storage";
 
-
 #define FSG_NO_INTR_EP 1
 #define FSG_NO_DEVICE_STRINGS    1
 #define FSG_NO_OTG               1
 #define FSG_NO_INTR_EP           1
 
 #include "storage_common.c"
-
 
 /*-------------------------------------------------------------------------*/
 
@@ -362,6 +360,8 @@ struct fsg_common {
 	u32			tag;
 	u32			residue;
 	u32			usb_amount_left;
+
+/*	unsigned int	board_nluns; */
 
 	unsigned int		can_stall:1;
 	unsigned int		free_storage_on_release:1;
@@ -418,7 +418,6 @@ struct fsg_config {
 	struct platform_device *pdev;
 #endif
 };
-
 
 struct fsg_dev {
 	struct usb_function	function;
@@ -2957,7 +2956,18 @@ static int fsg_bind(struct usb_configuration *c, struct usb_function *f)
 	if (i < 0)
 		return i;
 	fsg_intf_desc.bInterfaceNumber = i;
-	fsg->interface_number = i;
+	fsg->interface_number = 0;
+
+#ifdef CONFIG_USB_ANDROID_MASS_STORAGE
+	/* HACK!!  Android doesn't rebind on new configurations, instead it
+	 * separates functionality in different products.  Thus config_buf()
+	 * in composite.c is set to rewrite bInterfaceNumber to match the
+	 * actual function configuration of the active product.  Since that
+	 * number is checked in fsg_setup, we need to know it.  So we cheat,
+	 * knowing that UMS is the first function in all of our "products".
+	 */
+	fsg->interface_number = 0;
+#endif
 
 	/* Find all the endpoints we will use */
 	ep = usb_ep_autoconfig(gadget, &fsg_fs_bulk_in_desc);

@@ -17,7 +17,6 @@
 #include "u_serial.h"
 #include "gadget_chips.h"
 
-
 /*
  * This function packages a simple "generic serial" port with no real
  * control mechanisms, just raw data transfer over two bulk endpoints.
@@ -293,3 +292,4 @@ int __init gser_bind_config(struct usb_configuration *c, u8 port_num)
 		kfree(gser);
 	return status;
 }
+

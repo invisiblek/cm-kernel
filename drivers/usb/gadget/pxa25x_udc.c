@@ -65,10 +65,6 @@
 #include <mach/pxa25x-udc.h>
 #endif
 
-#ifdef CONFIG_ARCH_LUBBOCK
-#include <mach/lubbock.h>
-#endif
-
 #include <asm/mach/udc_pxa2xx.h>
 
 

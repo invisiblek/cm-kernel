@@ -25,14 +25,6 @@
 #include <linux/kernel.h>
 #include <linux/utsname.h>
 
-
-#if defined USB_ETH_RNDIS
-#  undef USB_ETH_RNDIS
-#endif
-#ifdef CONFIG_USB_ETH_RNDIS
-#  define USB_ETH_RNDIS y
-#endif
-
 #include "u_ether.h"
 
 
@@ -74,7 +66,7 @@
 #define DRIVER_DESC		"Ethernet Gadget"
 #define DRIVER_VERSION		"Memorial Day 2008"
 
-#ifdef USB_ETH_RNDIS
+#ifdef CONFIG_USB_ETH_RNDIS
 #define PREFIX			"RNDIS/"
 #else
 #define PREFIX			""
@@ -95,7 +87,7 @@
 
 static inline bool has_rndis(void)
 {
-#ifdef	USB_ETH_RNDIS
+#ifdef	CONFIG_USB_ETH_RNDIS
 	return true;
 #else
 	return false;
@@ -118,7 +110,7 @@ static inline bool has_rndis(void)
 
 #include "f_ecm.c"
 #include "f_subset.c"
-#ifdef	USB_ETH_RNDIS
+#ifdef	CONFIG_USB_ETH_RNDIS
 #include "f_rndis.c"
 #include "rndis.c"
 #endif
