@@ -1183,7 +1183,7 @@ static void mtp_function_disable(struct usb_function *f)
 static int mtp_bind_config(struct usb_configuration *c)
 {
 	struct mtp_dev *dev;
-	int ret = 0;
+	int ret;
 
 	printk(KERN_INFO "mtp_bind_config\n");
 
