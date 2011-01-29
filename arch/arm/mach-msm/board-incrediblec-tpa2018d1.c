@@ -256,32 +256,6 @@ static struct miscdevice tpa2018d1_device = {
 	.fops = &tpa2018d1_fops,
 };
 
-void tpa2018d1_set_speaker_amp(int on)
-{
-	if (!pdata) {
-		pr_err("%s: no platform data!\n", __func__);
-		return;
-	}
-	mutex_lock(&spk_amp_lock);
-	if (on && !is_on) {
-		gpio_set_value(pdata->gpio_tpa2018_spk_en, 1);
-		msleep(5); /* According to TPA2018D1 Spec */
-
-		if (tpa2018_i2c_write(spk_amp_cfg, sizeof(spk_amp_cfg)) == 0) {
-			is_on = 1;
-			pr_info("%s: ON\n", __func__);
-		}
-	} else if (!on && is_on) {
-		if (tpa2018_i2c_write(spk_amp_off, sizeof(spk_amp_off)) == 0) {
-			is_on = 0;
-			msleep(2);
-			gpio_set_value(pdata->gpio_tpa2018_spk_en, 0);
-			pr_info("%s: OFF\n", __func__);
-		}
-	}
-	mutex_unlock(&spk_amp_lock);
-}
-
 static int tpa2018d1_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	int ret = 0;

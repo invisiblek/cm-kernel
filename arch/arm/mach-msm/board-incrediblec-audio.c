@@ -105,7 +105,6 @@ void incrediblec_speaker_enable(int en)
 
 		pmic_set_spkr_configuration(&scm);
 	}
-	tpa2018d1_set_speaker_amp(en);
 }
 
 void incrediblec_receiver_enable(int en)
