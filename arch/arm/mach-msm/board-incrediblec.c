@@ -17,7 +17,6 @@
 
 #include <linux/gpio.h>
 #include <linux/i2c.h>
-#include <linux/i2c-msm.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
@@ -44,7 +43,6 @@
 #include <mach/camera.h>
 #include <mach/msm_iomap.h>
 #include <mach/htc_battery.h>
-// #include <mach/htc_usb.h>
 #include <mach/perflock.h>
 #include <mach/msm_serial_debugger.h>
 #include <mach/system.h>
@@ -62,7 +60,6 @@
 #include <mach/msm_flashlight.h>
 #include <linux/atmel_qt602240.h>
 #include <mach/vreg.h>
-/* #include <mach/pmic.h> */
 #include <mach/msm_hsusb.h>
 #include <mach/bcm_bt_lpm.h>
 
@@ -196,25 +193,25 @@ static int __capella_cm3602_power(int on)
 {
 	uint8_t data[3], addr;
 	int ret;
-
+	
 	printk(KERN_DEBUG "%s: Turn the capella_cm3602 power %s\n",
-		__func__, (on) ? "on" : "off");
+		   __func__, (on) ? "on" : "off");
 	if (on)
 		gpio_direction_output(INCREDIBLEC_GPIO_PROXIMITY_EN_N, 1);
-
+	
 	data[0] = 0x00;
 	data[1] = 0x00;
 	data[2] = 0x04;
 	addr = on ? MICROP_I2C_WCMD_GPO_LED_STATUS_EN :
-			MICROP_I2C_WCMD_GPO_LED_STATUS_DIS;
+	MICROP_I2C_WCMD_GPO_LED_STATUS_DIS;
 	ret = microp_i2c_write(addr, data, 3);
 	if (ret < 0)
 		pr_err("%s: %s capella power failed\n",
-			__func__, (on ? "enable" : "disable"));
-
+			   __func__, (on ? "enable" : "disable"));
+	
 	if (!on)
 		gpio_direction_output(INCREDIBLEC_GPIO_PROXIMITY_EN_N, 0);
-
+	
 	return ret;
 }
 
@@ -226,19 +223,19 @@ static int capella_cm3602_power(int pwr_device, uint8_t enable)
 	unsigned int old_status = 0;
 	int ret = 0, on = 0;
 	mutex_lock(&capella_cm3602_lock);
-
+	
 	old_status = als_power_control;
 	if (enable)
 		als_power_control |= pwr_device;
 	else
 		als_power_control &= ~pwr_device;
-
+	
 	on = als_power_control ? 1 : 0;
 	if (old_status == 0 && on)
 		ret = __capella_cm3602_power(1);
 	else if (!on)
 		ret = __capella_cm3602_power(0);
-
+	
 	mutex_unlock(&capella_cm3602_lock);
 	return ret;
 }
@@ -463,75 +460,10 @@ static struct platform_device incrediblec_rfkill = {
 	.id = -1,
 };
 
-static struct resource qsd_spi_resources[] = {
-	{
-		.name   = "spi_irq_in",
-		.start  = INT_SPI_INPUT,
-		.end    = INT_SPI_INPUT,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_irq_out",
-		.start  = INT_SPI_OUTPUT,
-		.end    = INT_SPI_OUTPUT,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_irq_err",
-		.start  = INT_SPI_ERROR,
-		.end    = INT_SPI_ERROR,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_base",
-		.start  = 0xA1200000,
-		.end    = 0xA1200000 + SZ_4K - 1,
-		.flags  = IORESOURCE_MEM,
-	},
-	{
-		.name   = "spi_clk",
-		.start  = 17,
-		.end    = 1,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_mosi",
-		.start  = 18,
-		.end    = 1,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_miso",
-		.start  = 19,
-		.end    = 1,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_cs0",
-		.start  = 20,
-		.end    = 1,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_pwr",
-		.start  = 21,
-		.end    = 0,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spi_irq_cs0",
-		.start  = 22,
-		.end    = 0,
-		.flags  = IORESOURCE_IRQ,
-	},
+static struct spi_platform_data incrediblec_spi_pdata = {
+	.clk_rate	= 1200000,
 };
 
-static struct platform_device qsd_device_spi = {
-	.name           = "spi_qsd",
-	.id             = 0,
-	.num_resources  = ARRAY_SIZE(qsd_spi_resources),
-	.resource       = qsd_spi_resources,
-};
 
 static struct resource msm_kgsl_resources[] = {
 	{
@@ -1293,7 +1225,7 @@ static struct platform_device *devices[] __initdata = {
 	&incrediblec_leds,
 
 #if defined(CONFIG_SPI_QSD)
-	&qsd_device_spi,
+	&msm_device_spi,
 #endif
 	&incrediblec_oj,
 };
@@ -1354,18 +1286,6 @@ static void incrediblec_config_uart_gpios(void)
 {
         config_gpio_table(incrediblec_uart_gpio_table,
 				ARRAY_SIZE(incrediblec_uart_gpio_table));
-}
-
-static struct msm_i2c_device_platform_data msm_i2c_pdata = {
-	.i2c_clock = 100000,
-	.clock_strength = GPIO_8MA,
-	.data_strength = GPIO_8MA,
-};
-
-static void __init msm_device_i2c_init(void)
-{
-	msm_i2c_gpio_init();
-	msm_device_i2c.dev.platform_data = &msm_i2c_pdata;
 }
 
 
@@ -1523,6 +1443,11 @@ static void __init incrediblec_init(void)
 	incrediblec_kgsl_power_rail_mode(0);
 	incrediblec_kgsl_power(true);
 
+	
+#ifdef CONFIG_SPI_QSD
+	msm_device_spi.dev.platform_data = &incrediblec_spi_pdata;
+#endif	
+	
 	#ifdef CONFIG_SERIAL_MSM_HS
 	msm_device_uart_dm1.dev.platform_data = &msm_uart_dm1_pdata;
 	msm_device_uart_dm1.name = "msm_serial_hs";	/* for bcm */
@@ -1536,7 +1461,6 @@ static void __init incrediblec_init(void)
 	gpio_direction_output(INCREDIBLEC_GPIO_TP_EN, 0);
 
 	incrediblec_audio_init();
-	msm_device_i2c_init();
 #ifdef CONFIG_MICROP_COMMON
 	incrediblec_microp_init();
 #endif
