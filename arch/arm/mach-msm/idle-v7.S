@@ -42,12 +42,18 @@ ENTRY(msm_pm_collapse)
 	mrc     p15, 0, ip, c13, c0, 1 /* context ID */
 	stmia   r0!, {r1-r9, ip}
 
-#ifdef CONFIG_VFP
-	VFPFSTMIA r0, r1              /* Save VFP working registers */
-	fmrx    r1, fpexc
-	fmrx    r2, fpscr
-	stmia   r0!, {r1, r2}         /* Save VFP state registers */
+#ifdef CONFIG_MSM_CPU_AVS
+	mrc     p15, 7, r1, c15, c1, 7 /* AVSCSR is the Adaptive Voltage Scaling
+		* Control and Status Register */
+	mrc     p15, 7, r2, c15, c0, 6 /* AVSDSCR is the Adaptive Voltage
+		* Scaling Delay Synthesizer Control
+		* Register */
+	mrc     p15, 7, r3, c15, c1, 0 /* TSCSR is the Temperature Status and
+		* Control Register
+		*/
+	stmia   r0!, {r1-r3}
 #endif
+
 	bl      v7_flush_dcache_all
 
 	mrc     p15, 0, r1, c1, c0, 0    /* read current CR    */
@@ -108,22 +114,11 @@ ENTRY(msm_pm_collapse_exit)
 	adr     r3, msm_pm_collapse_exit
 	add     r1, r1, r3
 	sub     r1, r1, r2
-#ifdef CONFIG_VFP
-	mrc     p15, 0, r2, c1, c0, 2 /* Read CP Access Control Register */
-	orr     r2, r2, #0x00F00000   /* Enable full access for p10,11 */
-	mcr     p15, 0, r2, c1, c0, 2 /* Write CPACR */
-	isb
-	mov     r2, #0x40000000       /* Enable VFP */
-	fmxr    fpexc, r2
-	isb
-	ldmdb   r1!, {r2, r3}         /* Read saved VFP state registers */
-	sub     r1, r1, #32*8         /* Jump to start of vfp regs area */
-	VFPFLDMIA r1, r4              /* Restore VFP working registers,
-				       * r1 incremented to end of vfp
-				       * regs area */
-	sub     r1, r1, #32*8         /* Jump back to start of vfp regs area */
-	fmxr    fpscr, r3             /* Restore FPSCR */
-	fmxr    fpexc, r2             /* Restore FPEXC last */
+#ifdef CONFIG_MSM_CPU_AVS
+	ldmdb   r1!, {r2-r4}
+	mcr     p15, 7, r4, c15, c1, 0 /* TSCSR */
+	mcr     p15, 7, r3, c15, c0, 6 /* AVSDSCR */
+	mcr     p15, 7, r2, c15, c1, 7 /* AVSCSR */
 #endif
 	ldmdb   r1!, {r2-r11}
 	mcr     p15, 0, r4, c3, c0, 0 /* dacr */
@@ -191,9 +186,8 @@ msm_pm_pa_to_va:
 saved_state:
 	.space  4 * 11 /* r4-14 */
 	.space  4 * 10  /* cp15 */
-#ifdef CONFIG_VFP
-	.space  8 * 32 /* VFP working registers */
-	.space  4 * 2  /* VFP state registers */
+#ifdef CONFIG_MSM_CPU_AVS
+	.space  4 * 3  /* AVS control registers */
 #endif
 saved_state_end:
 
